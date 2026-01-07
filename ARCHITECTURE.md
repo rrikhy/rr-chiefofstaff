@@ -78,20 +78,20 @@ The Chief of Staff Agent is a modular system that orchestrates multiple speciali
 ### 2. MCP Client Manager (`src/mcp-client.js`)
 
 **Responsibilities:**
-- Loading Claude Desktop MCP configuration
+- Loading MCP configuration (VS Code or Claude Desktop)
 - Connecting to MCP servers
 - Managing tool registry
 - Executing tool calls
 
 **Key Methods:**
-- `loadMCPConfig()`: Reads Claude Desktop config
+- `loadMCPConfig()`: Reads MCP config from VS Code settings or Claude Desktop
 - `initialize()`: Connects to all MCP servers
 - `callTool()`: Executes an MCP tool
 - `getAvailableTools()`: Returns all available tools
 
 **Connection Flow:**
 ```
-1. Read claude_desktop_config.json
+1. Load MCP config (VS Code workspace, user settings, or Claude Desktop)
 2. For each MCP server:
    - Create StdioClientTransport
    - Initialize MCP Client
@@ -229,7 +229,7 @@ Each agent is defined by a markdown file with this structure:
 
 ### Adding New MCP Servers
 
-1. Configure in Claude Desktop
+1. Configure in `.vscode/mcp.json` or VS Code settings
 2. System automatically discovers tools
 3. Reference tools in agent markdown
 4. No code changes needed
@@ -251,9 +251,9 @@ Each agent is defined by a markdown file with this structure:
 - Use `config.example.json` as template
 
 ### MCP Security
-- MCP servers run with Claude Desktop permissions
-- Tools inherit Claude Desktop's access
-- Review MCP server configurations
+- MCP servers run with configured permissions
+- Tools inherit access based on their credentials
+- Review MCP server configurations in `.vscode/mcp.json`
 
 ## Performance Considerations
 
@@ -364,7 +364,7 @@ npm run help
 2. Verify configuration: Review config.json
 3. Test individual agents: `npm start agent-name`
 4. Check API key validity
-5. Review Claude Desktop MCP settings
+5. Review MCP settings in `.vscode/mcp.json` or VS Code settings
 
 ## Best Practices
 

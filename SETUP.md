@@ -47,15 +47,16 @@ npm install
    ```env
    ANTHROPIC_API_KEY=sk-ant-your-key-here
    CLAUDE_MODEL=claude-sonnet-4-5-20250929
-   MCP_CONFIG_PATH=/Users/yourusername/Library/Application Support/Claude/claude_desktop_config.json
+   
+   # MCP config is auto-detected from VS Code or Claude Desktop
+   # Only set this if using a custom config location:
+   # MCP_CONFIG_PATH=/path/to/your/mcp-config.json
    
    # Optional: MCP connection settings (defaults shown)
    MCP_CONNECTION_TIMEOUT=30000    # Connection timeout in milliseconds (default: 30000 = 30s)
    MCP_MAX_RETRIES=3                # Maximum retry attempts per server (default: 3)
    MCP_RETRY_DELAY=2000             # Initial retry delay in milliseconds (default: 2000 = 2s)
    ```
-
-   Note: Replace `/Users/yourusername/` with your actual username
    
    **MCP Connection Settings**: If you experience timeout issues with MCP servers, you can increase these values:
    - `MCP_CONNECTION_TIMEOUT`: Increase if servers take longer to start (e.g., 60000 for 60 seconds)
@@ -99,11 +100,18 @@ npm install
 2. Look at the URL: `https://yoursite.atlassian.net/wiki/spaces/SPACE/pages/PAGE_ID/Page+Title`
 3. Copy the `PAGE_ID` number
 
-## Step 6: Verify MCP Server Setup
+## Step 6: Configure MCP Servers
 
-1. Open Claude Desktop
-2. Go to Settings → Developer → Model Context Protocol
-3. Verify you have MCP servers configured for:
+You can configure MCP servers in one of these locations (checked in order):
+
+### Option A: Workspace Config (Recommended)
+
+1. Copy the example MCP config:
+   ```bash
+   cp .vscode/mcp.json.example .vscode/mcp.json
+   ```
+
+2. Edit `.vscode/mcp.json` with your credentials for:
    - Slack
    - Google Calendar
    - Hubspot
@@ -112,7 +120,26 @@ npm install
    - Mixpanel (optional)
    - Gong (optional)
 
-If you don't have these set up, refer to Claude Desktop's MCP documentation.
+### Option B: VS Code User Settings
+
+Add MCP servers to your VS Code `settings.json`:
+```json
+{
+  "mcp.servers": {
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "xoxb-your-token"
+      }
+    }
+  }
+}
+```
+
+### Option C: Claude Desktop (Legacy)
+
+If you have MCP servers already configured in Claude Desktop, they will be auto-detected as a fallback.
 
 ## Step 7: Test the Installation
 
@@ -188,29 +215,32 @@ npm start
 
 ### "Could not load MCP config"
 
-- Check `MCP_CONFIG_PATH` in `.env`
-- Default macOS path: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Ensure Claude Desktop is installed and MCP servers are configured
+- The system auto-detects MCP config from multiple locations:
+  1. `MCP_CONFIG_PATH` environment variable (if set)
+  2. VS Code User settings (`settings.json` with `mcp.servers`)
+  3. Workspace `.vscode/mcp.json` file
+  4. Claude Desktop config (legacy fallback)
+- Create workspace config: `cp .vscode/mcp.json.example .vscode/mcp.json`
 
 ### MCP Tools Not Available
 
-- Verify Claude Desktop has MCP servers configured
-- Check that MCP servers are running (restart Claude Desktop if needed)
-- Ensure the MCP config path is correct
+- Verify MCP servers are configured in `.vscode/mcp.json` or VS Code settings
+- Check that MCP server credentials are valid
+- Restart VS Code if you just added MCP config
 
 ### Agent Execution Fails
 
 - Review the error message
 - Check that required MCP servers are available
 - Verify configuration IDs (Slack channels, Jira boards, etc.) are correct
-- Test MCP tools individually in Claude Desktop first
+- Test MCP connectivity with `npm run test-mcp`
 
 ## Getting Help
 
 1. Check the main README.md
 2. Review agent markdown files for instruction clarity
 3. Verify all configuration values are correct
-4. Test MCP servers in Claude Desktop directly
+4. Run `npm run test-mcp` to check MCP server connectivity
 
 ## Next Steps
 

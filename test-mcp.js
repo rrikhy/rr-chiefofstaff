@@ -30,11 +30,13 @@ async function testMCPConnection() {
     if (tools.length === 0) {
       console.log('⚠ No MCP tools found!');
       console.log('\nPossible reasons:');
-      console.log('1. Claude Desktop MCP config not found');
-      console.log('2. No MCP servers configured in Claude Desktop');
-      console.log('3. Incorrect MCP_CONFIG_PATH in .env');
-      console.log('\nCheck your MCP_CONFIG_PATH:');
-      console.log(`  ${process.env.MCP_CONFIG_PATH || 'Not set (using default)'}`);
+      console.log('1. No MCP config found in VS Code settings or workspace');
+      console.log('2. No MCP servers configured');
+      console.log('3. MCP servers failed to connect');
+      console.log('\nTo configure MCP servers:');
+      console.log('  - Create .vscode/mcp.json from .vscode/mcp.json.example');
+      console.log('  - Or add mcp.servers to VS Code settings.json');
+      console.log('  - Or configure in Claude Desktop (legacy)');
     } else {
       // Group tools by server
       const toolsByServer = {};

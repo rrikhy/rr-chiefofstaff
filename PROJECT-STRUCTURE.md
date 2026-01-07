@@ -6,16 +6,38 @@
 chief-of-staff-agent/
 │
 ├── agents/                           # Agent instruction files (edit these!)
-│   ├── weekly-recap.md              # Team communications & customer prep
-│   ├── business-health.md           # ARR, deals, churn, VoC
-│   ├── product-engineering.md       # Development progress & launches
-│   └── okr-progress.md              # OKR tracking and progress
+│   ├── COS/                         # Chief of Staff operational agents
+│   │   ├── weekly-recap.md          # Team communications & customer prep
+│   │   ├── business-health.md       # ARR, deals, churn, VoC
+│   │   ├── product-engineering.md   # Development progress & launches
+│   │   ├── okr-progress.md          # OKR tracking and progress
+│   │   ├── quarterly-review.md      # Quarterly review preparation
+│   │   └── thoughtleadership-updates.md  # Industry insights
+│   │
+│   ├── leadership/                  # Leadership-focused agents
+│   │   ├── product-strategy.md      # Strategic analysis & market positioning
+│   │   ├── portfolio-review.md      # Multi-product portfolio health
+│   │   ├── team-health.md           # Team delivery & engagement metrics
+│   │   └── stakeholder-briefing.md  # Executive communications
+│   │
+│   └── ic/                          # IC Product Management agents
+│       ├── prd-writer.md            # PRD creation & documentation
+│       ├── todo-tasks.md            # Task aggregation & prioritization
+│       ├── customer-discovery.md    # Discovery call prep & synthesis
+│       ├── sprint-planning.md       # Sprint planning facilitation
+│       └── competitive-analysis.md  # Competitive intelligence
 │
 ├── src/                              # Core system code (don't edit unless extending)
 │   ├── index.js                     # Master orchestrator & CLI
 │   ├── agent-runner.js              # Agent execution engine
 │   ├── mcp-client.js                # MCP server connection manager
 │   └── report-generator.js          # Report formatting & saving
+│
+├── mcp-servers/                      # Custom MCP servers
+│   └── gong-server.js               # Gong API integration
+│
+├── .vscode/                          # VS Code configuration
+│   └── mcp.json                     # MCP server configuration (GitHub Copilot)
 │
 ├── reports/                          # Generated reports (auto-created)
 │   └── weekly-report-YYYY-MM-DD-HH-MM-SS.md
@@ -46,15 +68,36 @@ chief-of-staff-agent/
 |------|---------|----------|
 | `.env` | API keys and environment settings | Yes |
 | `config.json` | Team info, Slack channels, Jira boards, etc. | Yes |
+| `.vscode/mcp.json` | MCP server configuration for VS Code | Yes |
 
 ### Agent Files (Customize These)
 
+#### COS Agents (Chief of Staff - Weekly/Operational)
 | File | Purpose | What It Analyzes |
 |------|---------|------------------|
-| `agents/weekly-recap.md` | Weekly catch-up | Slack messages, team activities, customer interviews |
-| `agents/business-health.md` | Business metrics | ARR, deals, churn, voice of customer |
-| `agents/product-engineering.md` | Development updates | Tickets, launches, usage, Gong calls |
-| `agents/okr-progress.md` | Strategic progress | OKR updates, AI initiatives |
+| `agents/COS/weekly-recap.md` | Weekly catch-up | Slack messages, team activities, customer interviews |
+| `agents/COS/business-health.md` | Business metrics | ARR, deals, churn, voice of customer |
+| `agents/COS/product-engineering.md` | Development updates | Tickets, launches, usage, Gong calls |
+| `agents/COS/okr-progress.md` | Strategic progress | OKR updates, AI initiatives |
+| `agents/COS/quarterly-review.md` | Quarter prep | Quarterly goals and achievements |
+| `agents/COS/thoughtleadership-updates.md` | Industry insights | Trends and thought leadership |
+
+#### Leadership Agents
+| File | Purpose | What It Analyzes |
+|------|---------|------------------|
+| `agents/leadership/product-strategy.md` | Strategic analysis | Market trends, competitive positioning, portfolio strategy |
+| `agents/leadership/portfolio-review.md` | Portfolio health | Multi-product metrics, investment allocation |
+| `agents/leadership/team-health.md` | Team metrics | Delivery velocity, engagement, sustainability |
+| `agents/leadership/stakeholder-briefing.md` | Executive comms | Key updates for leadership communication |
+
+#### IC Product Management Agents
+| File | Purpose | What It Analyzes |
+|------|---------|------------------|
+| `agents/ic/prd-writer.md` | PRD creation | Requirements gathering, documentation |
+| `agents/ic/todo-tasks.md` | Task management | Multi-source task aggregation, prioritization |
+| `agents/ic/customer-discovery.md` | Discovery prep | Customer call preparation & synthesis |
+| `agents/ic/sprint-planning.md` | Sprint planning | Backlog analysis, capacity planning |
+| `agents/ic/competitive-analysis.md` | Competitive intel | Win/loss, competitor tracking |
 
 ### Core System Files (Usually Don't Edit)
 
@@ -168,7 +211,7 @@ These are already in `.gitignore`.
 → Edit `src/report-generator.js`
 
 ### To Add New MCP Tools
-→ Configure in Claude Desktop (no code changes needed)
+→ Configure in `.vscode/mcp.json` or VS Code settings (no code changes needed)
 
 ## Common Tasks
 
@@ -211,7 +254,7 @@ npm run list
 
 ### External Dependencies
 - Node.js 18+
-- Claude Desktop with MCP servers
+- VS Code with GitHub Copilot (or Claude Desktop)
 - Anthropic API key
 
 ## Version Control

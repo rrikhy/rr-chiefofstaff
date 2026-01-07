@@ -13,7 +13,7 @@ A complete, production-ready master agent system that runs weekly analysis for a
 
 ### Architecture
 - **Modular Design**: Each agent is independently configurable via markdown files
-- **MCP Integration**: Automatically uses your existing Claude Desktop MCP connectors
+- **MCP Integration**: Automatically uses your MCP connectors from VS Code or Claude Desktop
 - **Flexible Execution**: Run all agents or specific ones on-demand
 - **Automated Reporting**: Generates comprehensive markdown reports
 
@@ -76,7 +76,7 @@ chiefof/
 ```
 1. Load .env (API keys)
 2. Load config.json (team details, IDs)
-3. Connect to Claude Desktop MCP servers
+3. Connect to MCP servers (VS Code or Claude Desktop)
 4. Discover available tools (Slack, Jira, etc.)
 5. Initialize agent runner
 ```
@@ -131,7 +131,7 @@ npm start
 ```env
 ANTHROPIC_API_KEY=your_key_here
 CLAUDE_MODEL=claude-sonnet-4-5-20250929
-MCP_CONFIG_PATH=/path/to/claude_desktop_config.json
+# MCP_CONFIG_PATH is optional - auto-detected from VS Code or Claude Desktop
 ```
 
 ### config.json (from your example)
@@ -190,7 +190,7 @@ Each agent is fully customizable by editing its markdown file. No code changes n
 ### 1. Modular & Extensible
 - Add new agents by creating markdown files
 - Customize existing agents without code changes
-- Use any MCP connector from Claude Desktop
+- Use any MCP connector from VS Code or Claude Desktop
 
 ### 2. Automated Insights
 - Weekly comprehensive analysis
@@ -280,7 +280,7 @@ Reports are saved to `reports/weekly-report-YYYY-MM-DD-HH-MM-SS.md`
 
 5. **Extend**
    - Create new agents for other areas
-   - Add new MCP connectors in Claude Desktop
+   - Add new MCP connectors in `.vscode/mcp.json`
    - Customize report formats
 
 ## Troubleshooting
@@ -291,8 +291,8 @@ Common issues and solutions:
 |-------|----------|
 | "ANTHROPIC_API_KEY not found" | Check `.env` file exists and has valid key |
 | "config.json not found" | Copy `config.example.json` to `config.json` |
-| "Could not load MCP config" | Verify `MCP_CONFIG_PATH` in `.env` |
-| "Tool X not found" | Configure MCP server in Claude Desktop |
+| "Could not load MCP config" | Create `.vscode/mcp.json` or check VS Code settings |
+| "Tool X not found" | Configure MCP server in `.vscode/mcp.json` |
 | Agent execution fails | Check MCP connectivity: `npm run test-mcp` |
 
 ## Documentation Navigation
@@ -318,7 +318,7 @@ Common issues and solutions:
 
 - Node.js 18+
 - Anthropic API key
-- Claude Desktop with MCP servers configured
+- VS Code with GitHub Copilot (or Claude Desktop) with MCP servers configured
 
 ## Features Summary
 

@@ -13,7 +13,7 @@ Provide a comprehensive quarterly review of product releases, team OKR progress,
   - Platform member activity files (e.g., "Q3/Platform Member Activity - manager.xlsx")
 - Use the OKR board ID from config.json (ovOkrBoardId: xxxxxx)
 - Use the filter H2_Jira_Discovery_Ideas filter from config.json
-- Query Jira ideas/OKRs from the board to see what was completed/updated using the Claude Desktop Atlassian Connector
+- Query Jira ideas/OKRs from the board to see what was completed/updated using the Atlassian MCP server
 - Look for ideas that were resolved, closed, or updated during the time period
 - Don't use the JiraTeams values as labels in the JQL search issues
 

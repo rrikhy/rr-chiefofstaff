@@ -7,7 +7,7 @@ import { MCP_DEFAULTS } from './utils/constants.js';
 
 /**
  * MCP Client Manager
- * Loads and connects to MCP servers configured in Claude Desktop
+ * Loads and connects to MCP servers configured in VS Code or Claude Desktop
  */
 export class MCPClientManager {
   constructor() {
@@ -20,18 +20,93 @@ export class MCPClientManager {
   }
 
   /**
-   * Load MCP configuration from Claude Desktop config
+   * Load MCP configuration from VS Code settings or Claude Desktop config
+   * Checks multiple locations in order of preference:
+   * 1. Environment variable MCP_CONFIG_PATH
+   * 2. VS Code User settings (settings.json with mcp.servers)
+   * 3. VS Code MCP config file (.vscode/mcp.json in workspace)
+   * 4. Claude Desktop config (legacy fallback)
    */
   loadMCPConfig() {
-    const configPath = process.env.MCP_CONFIG_PATH ||
-      path.join(os.homedir(), 'Library/Application Support/Claude/claude_desktop_config.json');
+    // 1. Check for explicit config path in environment
+    if (process.env.MCP_CONFIG_PATH) {
+      const config = this.loadConfigFromPath(process.env.MCP_CONFIG_PATH);
+      if (config) return config;
+    }
 
+    // 2. Check VS Code User settings
+    const vscodeUserSettings = this.getVSCodeUserSettingsPath();
+    if (vscodeUserSettings && fs.existsSync(vscodeUserSettings)) {
+      try {
+        const settings = JSON.parse(fs.readFileSync(vscodeUserSettings, 'utf8'));
+        if (settings['mcp.servers'] || settings.mcp?.servers) {
+          console.log('Loading MCP config from VS Code User settings');
+          return settings['mcp.servers'] || settings.mcp?.servers || {};
+        }
+      } catch (error) {
+        console.warn(`Could not parse VS Code settings: ${error.message}`);
+      }
+    }
+
+    // 3. Check for workspace-level VS Code MCP config
+    const workspaceMcpConfig = path.join(process.cwd(), '.vscode', 'mcp.json');
+    if (fs.existsSync(workspaceMcpConfig)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(workspaceMcpConfig, 'utf8'));
+        console.log('Loading MCP config from workspace .vscode/mcp.json');
+        return config.servers || config.mcpServers || config || {};
+      } catch (error) {
+        console.warn(`Could not parse workspace MCP config: ${error.message}`);
+      }
+    }
+
+    // 4. Legacy: Check Claude Desktop config
+    const claudeDesktopPath = path.join(
+      os.homedir(),
+      'Library/Application Support/Claude/claude_desktop_config.json'
+    );
+    if (fs.existsSync(claudeDesktopPath)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(claudeDesktopPath, 'utf8'));
+        console.log('Loading MCP config from Claude Desktop (legacy)');
+        return config.mcpServers || {};
+      } catch (error) {
+        console.warn(`Could not load Claude Desktop config: ${error.message}`);
+      }
+    }
+
+    console.warn('No MCP configuration found');
+    return {};
+  }
+
+  /**
+   * Get VS Code User settings path based on OS
+   */
+  getVSCodeUserSettingsPath() {
+    const platform = os.platform();
+    const home = os.homedir();
+    
+    if (platform === 'darwin') {
+      return path.join(home, 'Library/Application Support/Code/User/settings.json');
+    } else if (platform === 'win32') {
+      return path.join(process.env.APPDATA || '', 'Code/User/settings.json');
+    } else {
+      return path.join(home, '.config/Code/User/settings.json');
+    }
+  }
+
+  /**
+   * Load config from a specific path
+   */
+  loadConfigFromPath(configPath) {
     try {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return config.mcpServers || {};
+      console.log(`Loading MCP config from: ${configPath}`);
+      // Support both VS Code format (servers/mcp.servers) and Claude Desktop format (mcpServers)
+      return config.servers || config['mcp.servers'] || config.mcp?.servers || config.mcpServers || config || {};
     } catch (error) {
       console.warn(`Could not load MCP config from ${configPath}:`, error.message);
-      return {};
+      return null;
     }
   }
 

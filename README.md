@@ -1,6 +1,6 @@
 # Chief of Staff Agent System
 
-A master agent system that provides comprehensive weekly insights for Product Directors, powered by Anthropic's Claude AI and Model Context Protocol (MCP).
+A master agent system that provides comprehensive weekly insights for Product Directors, powered by Anthropic's Claude AI and Model Context Protocol (MCP). Works with VS Code, GitHub Copilot, and Claude Desktop.
 
 ## Overview
 
@@ -37,11 +37,11 @@ chief-of-staff-agent/
 
 1. **Anthropic API Key**: Get one from https://console.anthropic.com/
 2. **Node.js**: Version 18 or higher
-3. **Claude Desktop with MCP Servers**: The system uses your existing MCP connectors
+3. **MCP Servers**: Configure in VS Code, GitHub Copilot, or Claude Desktop
 
 ### Required MCP Servers
 
-You'll need MCP servers configured in Claude Desktop for:
+You'll need MCP servers configured for:
 - Slack (for team communications)
 - Google Calendar (for calendar access)
 - Hubspot (for CRM data)
@@ -75,7 +75,10 @@ You'll need MCP servers configured in Claude Desktop for:
    ```env
    ANTHROPIC_API_KEY=your_api_key_here
    CLAUDE_MODEL=claude-sonnet-4-5-20250929
-   MCP_CONFIG_PATH=/Users/yourusername/Library/Application Support/Claude/claude_desktop_config.json
+   
+   # MCP config is auto-detected from VS Code or Claude Desktop
+   # Only set this if using a custom location:
+   # MCP_CONFIG_PATH=/path/to/your/mcp-config.json
    
    # Optional: MCP connection settings (defaults shown)
    MCP_CONNECTION_TIMEOUT=30000    # Connection timeout in milliseconds (default: 30000 = 30s)
@@ -224,7 +227,7 @@ Example agent structure:
 ## MCP Integration
 
 The system automatically:
-1. Loads your Claude Desktop MCP configuration
+1. Loads your MCP configuration (from VS Code, workspace, or Claude Desktop)
 2. Connects to all configured MCP servers
 3. Makes all MCP tools available to agents
 4. Handles tool calls transparently
@@ -260,13 +263,17 @@ To run this weekly automatically, set up a cron job or scheduled task:
 - Configure with your details
 
 ### "Could not load MCP config"
-- Verify `MCP_CONFIG_PATH` in `.env` points to your Claude Desktop config
-- Default path (macOS): `~/Library/Application Support/Claude/claude_desktop_config.json`
+- The system auto-detects MCP config from:
+  1. `MCP_CONFIG_PATH` environment variable (if set)
+  2. VS Code User settings (`settings.json` with `mcp.servers`)
+  3. Workspace `.vscode/mcp.json` file
+  4. Claude Desktop config (legacy)
+- Create `.vscode/mcp.json` from the example: `cp .vscode/mcp.json.example .vscode/mcp.json`
 
 ### "Tool X not found"
-- Ensure the required MCP server is configured in Claude Desktop
+- Ensure the required MCP server is configured in your MCP config
 - Verify the MCP server is running correctly
-- Check MCP server names in Claude Desktop config
+- Check MCP server names in your config
 
 ### "MCP error -32001: Request timed out"
 - This indicates an MCP server connection timeout
@@ -276,7 +283,7 @@ To run this weekly automatically, set up a cron job or scheduled task:
   - Increase `MCP_CONNECTION_TIMEOUT` in `.env` (e.g., `60000` for 60 seconds)
   - Increase `MCP_MAX_RETRIES` in `.env` (e.g., `5` for more retry attempts)
   - Check if the MCP server process is slow to start or has dependencies
-  - Verify the MCP server command in Claude Desktop config is correct
+  - Verify the MCP server command in your config is correct
 
 ### Agent failures
 - Check that all required MCP servers are configured
@@ -340,4 +347,6 @@ Architecture inspired by [rachel wolan's agent-chief-of-staff](https://github.co
 
 Powered by:
 - [Anthropic Claude](https://www.anthropic.com/)
+- [GitHub Copilot](https://github.com/features/copilot)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
+- [VS Code](https://code.visualstudio.com/)
