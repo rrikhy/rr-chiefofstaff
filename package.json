@@ -15,16 +15,19 @@
     "agent",
     "anthropic",
     "claude",
-    "github-copilot",
-    "vscode",
+    "cursor",
+    "mcp",
     "automation"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/bedrock-sdk": "^0.26.0",
     "@anthropic-ai/sdk": "^0.32.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "dotenv": "^16.4.5",
+    "eventsource": "^4.1.0",
+    "mcp-remote": "^0.1.37",
     "pdf-parse": "^1.1.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }

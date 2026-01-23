@@ -1,0 +1,35 @@
+{
+  "servers": {
+    "atlassian": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"]
+    },
+    "salesforce": {
+      "command": "npx",
+      "args": ["-y", "@salesforce/mcp@latest", "--target-org", "myorg", "--toolsets", "core,metadata,apex"],
+      "env": {}
+    },
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "xoxb-your-bot-token",
+        "SLACK_TEAM_ID": "T0YOUR0ID"
+      }
+    },
+    "google-calendar": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-google-calendar"],
+      "env": {
+        "GOOGLE_CALENDAR_CREDENTIALS": "/path/to/credentials.json"
+      }
+    },
+    "hubspot": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-hubspot"],
+      "env": {
+        "HUBSPOT_API_KEY": "your-hubspot-api-key"
+      }
+    }
+  }
+}

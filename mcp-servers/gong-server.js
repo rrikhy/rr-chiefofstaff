@@ -5,14 +5,18 @@
  * Custom MCP server for Gong call recordings and insights
  * 
  * Requires:
- * - GONG_API_KEY: Your Gong API access key
- * - GONG_API_SECRET: Your Gong API secret (for Salesforce SSO, use OAuth token)
+ * - GONG_ACCESS_KEY or GONG_API_KEY: Your Gong API access key
+ * - GONG_ACCESS_KEY_SECRET or GONG_API_SECRET: Your Gong API secret
+ * - GONG_BASE_URL: Your Gong API base URL (e.g., https://us-24642.api.gong.io)
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import './load-env.js';
 
-const GONG_API_BASE = 'https://api.gong.io/v2';
+// Use the correct base URL without /v2 suffix - we add it per endpoint
+const GONG_BASE_URL = process.env.GONG_BASE_URL || 'https://us-24642.api.gong.io';
 
 class GongServer {
   constructor() {
@@ -25,11 +29,11 @@ class GongServer {
   }
 
   async makeGongRequest(endpoint, method = 'GET', body = null) {
-    const apiKey = process.env.GONG_API_KEY;
-    const apiSecret = process.env.GONG_API_SECRET;
+    const apiKey = process.env.GONG_ACCESS_KEY || process.env.GONG_API_KEY;
+    const apiSecret = process.env.GONG_ACCESS_KEY_SECRET || process.env.GONG_API_SECRET;
     
     if (!apiKey || !apiSecret) {
-      throw new Error('GONG_API_KEY and GONG_API_SECRET must be set');
+      throw new Error('GONG_ACCESS_KEY/GONG_API_KEY and GONG_ACCESS_KEY_SECRET/GONG_API_SECRET must be set');
     }
 
     const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
@@ -46,17 +50,19 @@ class GongServer {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${GONG_API_BASE}${endpoint}`, options);
+    const url = `${GONG_BASE_URL}${endpoint}`;
+    const response = await fetch(url, options);
     
     if (!response.ok) {
-      throw new Error(`Gong API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Gong API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     return response.json();
   }
 
   setupTools() {
-    this.server.setRequestHandler('tools/list', async () => ({
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
           name: 'gong_list_calls',
@@ -145,7 +151,7 @@ class GongServer {
       ]
     }));
 
-    this.server.setRequestHandler('tools/call', async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -184,10 +190,19 @@ class GongServer {
   }
 
   async listCalls({ fromDateTime, toDateTime, workspaceId }) {
+    // Gong API uses /v2/calls/extensive for listing calls with filters
     const body = {
       filter: {
         fromDateTime,
         toDateTime
+      },
+      contentSelector: {
+        exposedFields: {
+          parties: true,
+          content: {
+            topics: true
+          }
+        }
       }
     };
     
@@ -195,27 +210,46 @@ class GongServer {
       body.filter.workspaceId = workspaceId;
     }
 
-    return this.makeGongRequest('/calls', 'POST', body);
+    return this.makeGongRequest('/v2/calls/extensive', 'POST', body);
   }
 
   async getCall(callId) {
-    return this.makeGongRequest(`/calls/${callId}`);
+    // Get single call metadata
+    const body = {
+      filter: {
+        callIds: [callId]
+      }
+    };
+    return this.makeGongRequest('/v2/calls/extensive', 'POST', body);
   }
 
   async getCallTranscript(callId) {
-    return this.makeGongRequest(`/calls/${callId}/transcript`);
+    // Gong API requires POST with filter.callIds array for transcripts
+    const body = {
+      filter: {
+        callIds: [callId]
+      }
+    };
+    return this.makeGongRequest('/v2/calls/transcript', 'POST', body);
   }
 
   async searchCalls({ query, participantEmails, fromDateTime, toDateTime }) {
+    // Use /v2/calls/extensive with filters - there's no dedicated search endpoint
     const body = {
-      filter: {}
+      filter: {},
+      contentSelector: {
+        exposedFields: {
+          parties: true,
+          content: {
+            topics: true,
+            trackers: true
+          }
+        }
+      }
     };
 
-    if (query) {
-      body.filter.textSearch = query;
-    }
-    if (participantEmails) {
-      body.filter.participantsEmails = participantEmails;
+    if (participantEmails && participantEmails.length > 0) {
+      body.filter.primaryUserIds = participantEmails;
     }
     if (fromDateTime) {
       body.filter.fromDateTime = fromDateTime;
@@ -224,11 +258,13 @@ class GongServer {
       body.filter.toDateTime = toDateTime;
     }
 
-    return this.makeGongRequest('/calls/search', 'POST', body);
+    // Note: Gong API doesn't support text search in list calls
+    // You need to get transcripts separately and search client-side
+    return this.makeGongRequest('/v2/calls/extensive', 'POST', body);
   }
 
   async getUsers() {
-    return this.makeGongRequest('/users');
+    return this.makeGongRequest('/v2/users', 'GET');
   }
 
   async run() {

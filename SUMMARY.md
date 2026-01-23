@@ -13,7 +13,7 @@ A complete, production-ready master agent system that runs weekly analysis for a
 
 ### Architecture
 - **Modular Design**: Each agent is independently configurable via markdown files
-- **MCP Integration**: Automatically uses your MCP connectors from VS Code or Claude Desktop
+- **MCP Integration**: Automatically uses your MCP connectors from Cursor or Claude Desktop
 - **Flexible Execution**: Run all agents or specific ones on-demand
 - **Automated Reporting**: Generates comprehensive markdown reports
 
@@ -76,7 +76,7 @@ chiefof/
 ```
 1. Load .env (API keys)
 2. Load config.json (team details, IDs)
-3. Connect to MCP servers (VS Code or Claude Desktop)
+3. Connect to MCP servers (Cursor or Claude Desktop)
 4. Discover available tools (Slack, Jira, etc.)
 5. Initialize agent runner
 ```
@@ -131,7 +131,7 @@ npm start
 ```env
 ANTHROPIC_API_KEY=your_key_here
 CLAUDE_MODEL=claude-sonnet-4-5-20250929
-# MCP_CONFIG_PATH is optional - auto-detected from VS Code or Claude Desktop
+# MCP_CONFIG_PATH is optional - auto-detected from Cursor or Claude Desktop
 ```
 
 ### config.json (from your example)
@@ -190,7 +190,7 @@ Each agent is fully customizable by editing its markdown file. No code changes n
 ### 1. Modular & Extensible
 - Add new agents by creating markdown files
 - Customize existing agents without code changes
-- Use any MCP connector from VS Code or Claude Desktop
+- Use any MCP connector from Cursor or Claude Desktop
 
 ### 2. Automated Insights
 - Weekly comprehensive analysis
@@ -280,7 +280,7 @@ Reports are saved to `reports/weekly-report-YYYY-MM-DD-HH-MM-SS.md`
 
 5. **Extend**
    - Create new agents for other areas
-   - Add new MCP connectors in `.vscode/mcp.json`
+   - Add new MCP connectors in `.cursor/mcp.json`
    - Customize report formats
 
 ## Troubleshooting
@@ -291,8 +291,8 @@ Common issues and solutions:
 |-------|----------|
 | "ANTHROPIC_API_KEY not found" | Check `.env` file exists and has valid key |
 | "config.json not found" | Copy `config.example.json` to `config.json` |
-| "Could not load MCP config" | Create `.vscode/mcp.json` or check VS Code settings |
-| "Tool X not found" | Configure MCP server in `.vscode/mcp.json` |
+| "Could not load MCP config" | Create `.cursor/mcp.json` or check Cursor settings |
+| "Tool X not found" | Configure MCP server in `.cursor/mcp.json` |
 | Agent execution fails | Check MCP connectivity: `npm run test-mcp` |
 
 ## Documentation Navigation
@@ -318,7 +318,7 @@ Common issues and solutions:
 
 - Node.js 18+
 - Anthropic API key
-- VS Code with GitHub Copilot (or Claude Desktop) with MCP servers configured
+- Cursor IDE (or Claude Desktop) with MCP servers configured
 
 ## Features Summary
 
@@ -338,7 +338,7 @@ Common issues and solutions:
 ## What Makes This Special
 
 1. **No Code Changes Needed**: Customize agents by editing markdown
-2. **Uses Your Tools**: Leverages existing Claude Desktop MCP connectors
+2. **Uses Your Tools**: Leverages existing Cursor or Claude Desktop MCP connectors
 3. **Fully Automated**: Run weekly without manual intervention
 4. **Comprehensive**: Covers all requested analysis areas
 5. **Extensible**: Easy to add new agents and data sources

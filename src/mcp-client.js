@@ -7,7 +7,8 @@ import { MCP_DEFAULTS } from './utils/constants.js';
 
 /**
  * MCP Client Manager
- * Loads and connects to MCP servers configured in VS Code or Claude Desktop
+ * Loads and connects to MCP servers configured in Cursor or Claude Desktop
+ * Supports stdio (local) transports only - HTTP/SSE servers are handled by Cursor
  */
 export class MCPClientManager {
   constructor() {
@@ -20,11 +21,11 @@ export class MCPClientManager {
   }
 
   /**
-   * Load MCP configuration from VS Code settings or Claude Desktop config
+   * Load MCP configuration from Cursor settings or Claude Desktop config
    * Checks multiple locations in order of preference:
    * 1. Environment variable MCP_CONFIG_PATH
-   * 2. VS Code User settings (settings.json with mcp.servers)
-   * 3. VS Code MCP config file (.vscode/mcp.json in workspace)
+   * 2. Cursor User settings (settings.json with mcp.servers)
+   * 3. Cursor MCP config file (.cursor/mcp.json in workspace)
    * 4. Claude Desktop config (legacy fallback)
    */
   loadMCPConfig() {
@@ -34,26 +35,26 @@ export class MCPClientManager {
       if (config) return config;
     }
 
-    // 2. Check VS Code User settings
-    const vscodeUserSettings = this.getVSCodeUserSettingsPath();
-    if (vscodeUserSettings && fs.existsSync(vscodeUserSettings)) {
+    // 2. Check Cursor User settings
+    const cursorUserSettings = this.getCursorUserSettingsPath();
+    if (cursorUserSettings && fs.existsSync(cursorUserSettings)) {
       try {
-        const settings = JSON.parse(fs.readFileSync(vscodeUserSettings, 'utf8'));
+        const settings = JSON.parse(fs.readFileSync(cursorUserSettings, 'utf8'));
         if (settings['mcp.servers'] || settings.mcp?.servers) {
-          console.log('Loading MCP config from VS Code User settings');
+          console.log('Loading MCP config from Cursor User settings');
           return settings['mcp.servers'] || settings.mcp?.servers || {};
         }
       } catch (error) {
-        console.warn(`Could not parse VS Code settings: ${error.message}`);
+        console.warn(`Could not parse Cursor settings: ${error.message}`);
       }
     }
 
-    // 3. Check for workspace-level VS Code MCP config
-    const workspaceMcpConfig = path.join(process.cwd(), '.vscode', 'mcp.json');
+    // 3. Check for workspace-level Cursor MCP config
+    const workspaceMcpConfig = path.join(process.cwd(), '.cursor', 'mcp.json');
     if (fs.existsSync(workspaceMcpConfig)) {
       try {
         const config = JSON.parse(fs.readFileSync(workspaceMcpConfig, 'utf8'));
-        console.log('Loading MCP config from workspace .vscode/mcp.json');
+        console.log('Loading MCP config from workspace .cursor/mcp.json');
         return config.servers || config.mcpServers || config || {};
       } catch (error) {
         console.warn(`Could not parse workspace MCP config: ${error.message}`);
@@ -80,18 +81,18 @@ export class MCPClientManager {
   }
 
   /**
-   * Get VS Code User settings path based on OS
+   * Get Cursor User settings path based on OS
    */
-  getVSCodeUserSettingsPath() {
+  getCursorUserSettingsPath() {
     const platform = os.platform();
     const home = os.homedir();
     
     if (platform === 'darwin') {
-      return path.join(home, 'Library/Application Support/Code/User/settings.json');
+      return path.join(home, 'Library/Application Support/Cursor/User/settings.json');
     } else if (platform === 'win32') {
-      return path.join(process.env.APPDATA || '', 'Code/User/settings.json');
+      return path.join(process.env.APPDATA || '', 'Cursor/User/settings.json');
     } else {
-      return path.join(home, '.config/Code/User/settings.json');
+      return path.join(home, '.config/Cursor/User/settings.json');
     }
   }
 
@@ -102,7 +103,7 @@ export class MCPClientManager {
     try {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       console.log(`Loading MCP config from: ${configPath}`);
-      // Support both VS Code format (servers/mcp.servers) and Claude Desktop format (mcpServers)
+      // Support both Cursor format (servers/mcp.servers) and Claude Desktop format (mcpServers)
       return config.servers || config['mcp.servers'] || config.mcp?.servers || config.mcpServers || config || {};
     } catch (error) {
       console.warn(`Could not load MCP config from ${configPath}:`, error.message);
@@ -198,10 +199,19 @@ export class MCPClientManager {
 
   /**
    * Connect to a single MCP server with timeout handling
+   * Only supports stdio (local) transports - HTTP/SSE servers are handled by Cursor
    */
   async connectToServer(serverName, serverConfig) {
+    // Skip HTTP/SSE servers - those are for Cursor only
+    const isHttpServer = serverConfig.url || serverConfig.type === 'http' || serverConfig.type === 'sse';
+    
+    if (isHttpServer) {
+      console.log(`  ⏭️  Skipping ${serverName} (HTTP/SSE server - use Cursor for this)`);
+      return;
+    }
+    
+    // Stdio transport for local servers
     const { command, args = [], env = {} } = serverConfig;
-
     const transport = new StdioClientTransport({
       command,
       args,
@@ -225,7 +235,7 @@ export class MCPClientManager {
     } catch (error) {
       // Clean up transport if connection failed
       try {
-        await transport.close();
+        await transport.close?.();
       } catch (closeError) {
         // Ignore close errors
       }

@@ -17,6 +17,42 @@ import {
 } from './utils/constants.js';
 
 /**
+ * Create the appropriate Anthropic client based on environment
+ * Supports: Direct Anthropic API, AWS Bedrock
+ */
+async function createAnthropicClient() {
+  // Option 1: AWS Bedrock
+  if (process.env.AWS_REGION && (process.env.AWS_ACCESS_KEY_ID || process.env.AWS_PROFILE)) {
+    // Dynamic import for Bedrock SDK (optional dependency)
+    try {
+      const { AnthropicBedrock } = await import('@anthropic-ai/bedrock-sdk');
+      console.log('Using AWS Bedrock for Claude API');
+      return new AnthropicBedrock({
+        awsRegion: process.env.AWS_REGION,
+        // AWS credentials are auto-detected from environment/profile
+      });
+    } catch (error) {
+      console.warn('AWS Bedrock SDK not installed. Run: npm install @anthropic-ai/bedrock-sdk');
+      throw new Error('AWS Bedrock configured but SDK not installed. Run: npm install @anthropic-ai/bedrock-sdk');
+    }
+  }
+
+  // Option 2: Direct Anthropic API
+  if (process.env.ANTHROPIC_API_KEY) {
+    console.log('Using direct Anthropic API');
+    return new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY
+    });
+  }
+
+  throw new Error(
+    'No Claude API configuration found!\n' +
+    'Option 1: Set ANTHROPIC_API_KEY in .env for direct Anthropic API\n' +
+    'Option 2: Set AWS_REGION and AWS credentials for AWS Bedrock'
+  );
+}
+
+/**
  * Agent Runner
  * Executes individual agents based on their markdown instructions
  */
@@ -26,15 +62,22 @@ export class AgentRunner {
     this.config = config;
     this.dateRange = dateRange; // { startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD' }
     this.agentParams = agentParams; // { slackUserId: 'U...' } for slack-user-analysis
-    this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY
-    });
-    this.model = process.env.CLAUDE_MODEL || API_DEFAULTS.MODEL;
+    this.anthropic = null; // Will be initialized async
+    this.model = process.env.CLAUDE_MODEL || process.env.AWS_BEDROCK_MODEL || API_DEFAULTS.MODEL;
 
     // Initialize helper classes
     this.rateLimiter = new RateLimiter();
     this.messageTruncator = new MessageTruncator();
     this.toolHandler = new ToolHandler(agentParams);
+  }
+
+  /**
+   * Initialize the Anthropic client (must be called before running agents)
+   */
+  async initialize() {
+    if (!this.anthropic) {
+      this.anthropic = await createAnthropicClient();
+    }
   }
 
   /**
@@ -362,17 +405,24 @@ export class AgentRunner {
       .map(m => `${m.name} (${m.email}, Slack: ${m.slackId || 'N/A'})`)
       .join(', ');
     const jiraTeams = (this.config.team?.jiraTeams || []).join(', ');
-    const jiraProducts = (this.config.team?.jiraProducts || []).join(', ');
-    const ovEntireTeam = (this.config.team?.OVEntireTeam || []).join(', ');
+    // Helper to handle both string and array values
+    const toList = (value) => {
+      if (!value) return '';
+      if (Array.isArray(value)) return value.join(', ');
+      return String(value);
+    };
+
+    const jiraProducts = toList(this.config.team?.jiraProducts);
+    const ovEntireTeam = toList(this.config.team?.OVEntireTeam);
     const slackChannels = this.config.slack?.channels || {};
-    const salesChannels = (slackChannels.salesChannels || []).join(', ');
-    const csmChannels = (slackChannels.csmChannels || []).join(', ');
-    const productGeneral = (slackChannels.productGeneral || []).join(', ');
-    const productFeedback = (slackChannels.productFeedback || []).join(', ');
-    const teamChannels = (slackChannels.teamChannels || []).join(', ');
+    const salesChannels = toList(slackChannels.salesChannels);
+    const csmChannels = toList(slackChannels.csmChannels);
+    const productGeneral = toList(slackChannels.productGeneral);
+    const productFeedback = toList(slackChannels.productFeedback);
+    const teamChannels = toList(slackChannels.teamChannels);
 
     const dateRangeText = `Start: ${startDateISO} | End: ${endDateISO}${threeDaysAgoISO ? ` | 3d ago from end: ${threeDaysAgoISO}` : ''}`;
-    const calendarNames = (this.config.calendar?.name || []).join(', ');
+    const calendarNames = toList(this.config.calendar?.name);
 
     return `# Configuration (Concise Format)
 

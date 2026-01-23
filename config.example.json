@@ -62,6 +62,12 @@
   "gong": {
     "enabled": true
   },
+  "salesforce": {
+    "enabled": true,
+    "targetOrg": "myorg",
+    "toolsets": ["core", "metadata", "apex"],
+    "defaultReportObjects": ["Opportunity", "Account", "Contact", "Case", "Lead"]
+  },
   "thoughtleadership": {
     "rssFeeds": [
       "https://www.mindtheproduct.com/feed/"

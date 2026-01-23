@@ -57,21 +57,25 @@ class ChiefOfStaffAgent {
     };
 
     // Define default agent execution order (for --all or no specific agents)
+    // Only includes implemented agents (have .md files)
     this.agents = [
       'weekly-recap',
       'business-health',
       'product-engineering',
-      'telemetry-deepdive',
-      'team-pulse',
-      'pingboard-migration',
-      'jira-tracker',
       'okr-progress',
-      'productivity-weekly-tracker',
       'quarterly-review',
-      'thoughtleadership-updates',
-      'officevibe-strategy-roadmap',
-      'slack-user-analysis'
+      'thoughtleadership-updates'
     ];
+
+    // Placeholder agents (registered but not yet implemented - .md files don't exist)
+    // Uncomment when implemented:
+    // 'telemetry-deepdive',
+    // 'team-pulse',
+    // 'pingboard-migration',
+    // 'jira-tracker',
+    // 'productivity-weekly-tracker',
+    // 'officevibe-strategy-roadmap',
+    // 'slack-user-analysis'
   }
 
   /**
@@ -125,6 +129,7 @@ class ChiefOfStaffAgent {
 
     // Initialize agent runner
     this.agentRunner = new AgentRunner(this.mcpClient, this.config, this.dateRange, this.agentParams);
+    await this.agentRunner.initialize();
 
     console.log('\nInitialization complete!\n');
   }

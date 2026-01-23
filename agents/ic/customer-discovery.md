@@ -11,6 +11,158 @@ Help product managers prepare for and synthesize insights from customer discover
 - Calendar (upcoming customer meetings)
 - CRM/Salesforce (account details, if available via Gong)
 
+## MCP Tools
+
+This agent uses the following MCP tools for customer discovery preparation and synthesis:
+
+### Gong Tools
+- **`gong_list_calls(fromDateTime, toDateTime, participantEmails)`**: List customer calls
+  - `fromDateTime`: ISO 8601 datetime (e.g., "2024-01-01T00:00:00Z")
+  - `toDateTime`: ISO 8601 datetime (e.g., "2024-01-31T23:59:59Z")
+  - `participantEmails`: Array of customer email addresses (optional)
+- **`gong_search_calls(query, fromDateTime, toDateTime)`**: Search for calls mentioning customer
+  - `query`: Customer company name or domain
+  - Searches call titles and transcripts
+- **`gong_get_call_transcript(callId)`**: Get full transcript for past customer call
+  - `callId`: Gong call ID
+  - Use to review previous interactions and commitments
+- **`gong_get_call_summary(callId)`**: Get AI summary of call
+  - `callId`: Gong call ID
+  - Faster than full transcript for quick context
+
+### Jira/Atlassian Tools
+- **`jira_search_issues(jql, maxResults)`**: Search for customer's tickets
+  - `jql`: Jira Query Language string
+  - `maxResults`: Maximum number of results to return
+
+**Example JQL Queries for Customer Context**:
+```jql
+// Find all issues from a specific customer
+labels = "customer:acme-corp" OR reporter = "customer@acme.com"
+
+// Find open feature requests from customer
+project = "WPD" AND type = "Feature Request" AND labels = "customer:acme-corp" AND status != "Done"
+
+// Find recently resolved bugs for customer
+project = "WPD" AND type = "Bug" AND labels = "customer:acme-corp" AND resolved >= "2024-01-01" ORDER BY resolved DESC
+```
+
+- **`jira_get_issue(issueIdOrKey)`**: Get details for specific customer ticket
+  - `issueIdOrKey`: Issue ID or key (e.g., "WPD-1234")
+
+### Slack Tools
+- **`slack_search_messages(query, channelIds, after, before)`**: Search for customer mentions
+  - `query`: Customer company name, contact name, or domain
+  - `channelIds`: Array of channel IDs (CSM channels, team channels)
+  - `after`: ISO 8601 date string
+  - `before`: ISO 8601 date string
+- **`slack_get_channel_history(channelId, oldest, latest, limit)`**: Get CSM channel history
+  - Used to find recent customer updates and escalations
+
+### Confluence Tools
+- **`confluence_search(query, spaceKey)`**: Search for customer profiles and account plans
+  - `query`: Customer company name or "customer profile"
+  - `spaceKey`: CSM or customer success space (from config.json)
+- **`confluence_get_page(pageId)`**: Get specific customer profile page
+  - `pageId`: Confluence page ID for customer's account plan
+
+### Calendar Tools
+- **`calendar_list_events(calendarId, timeMin, timeMax, maxResults)`**: List upcoming meetings
+  - `calendarId`: Calendar identifier (from config.json)
+  - `timeMin`: ISO 8601 datetime (e.g., "2024-01-15T00:00:00Z")
+  - `timeMax`: ISO 8601 datetime (e.g., "2024-01-22T23:59:59Z")
+  - Used to find upcoming customer calls
+
+## Date Format Requirements
+
+**CRITICAL**: All MCP tools require ISO 8601 date format.
+
+- **Dates**: Use `YYYY-MM-DD` format (e.g., "2024-01-15")
+- **Datetimes**: Use `YYYY-MM-DDTHH:mm:ssZ` format (e.g., "2024-01-15T00:00:00Z")
+- **DO NOT use relative dates**: Avoid "-30d", "last quarter", "last month"
+- **Context-provided dates**: The agent runner provides `startDate` and `endDate` - use these directly
+
+Example usage:
+```javascript
+// Correct - Find past Gong calls with this customer
+gong_search_calls("Acme Corp", "2023-01-01T00:00:00Z", "2024-01-31T23:59:59Z")
+
+// Correct - Search Slack for recent customer mentions
+slack_search_messages("Acme Corp", ["C123CSM"], "2024-01-01", "2024-01-31")
+
+// Correct - Find upcoming meetings this week
+calendar_list_events("primary", "2024-01-15T00:00:00Z", "2024-01-22T23:59:59Z", 50)
+
+// Incorrect
+gong_search_calls("Acme Corp", "-90d", "today")
+slack_search_messages("Acme Corp", ["C123CSM"], "last month", "today")
+```
+
+## Required Configuration
+
+This agent requires the following keys in `config.json`:
+
+### Slack Configuration
+- **`slack.channels.csmChannels`**: Array of CSM/Customer Success channel IDs
+  - Example: `["C123CSM", "C456SUPPORT"]`
+  - Used to find customer updates and escalations
+- **`slack.channels.teamChannels`**: Array of team channel IDs
+  - Used to find internal customer discussions
+
+### Confluence Configuration
+- **`confluence.csmSpaceKey`**: CSM/Customer Success Confluence space
+  - Example: `"CS"` or `"CUSTOMERS"`
+  - Used for searching customer profiles and account plans
+
+### Calendar Configuration
+- **`calendar.name`**: Calendar identifier
+  - Example: `"primary"` or PM's email address
+  - Used to find upcoming customer meetings
+
+### Jira Configuration (Optional)
+- **`jira.projectKeys`**: Array of Jira project keys
+  - Example: `["WPD", "SUPPORT"]`
+  - Used for searching customer tickets
+
+### Optional Configuration
+- **`gong.defaultParticipants`**: Array of PM email addresses
+  - Used to filter calls by PM participation
+
+## Error Handling
+
+This agent should gracefully handle missing data sources:
+
+### Missing Gong Access
+- **Fallback**: Use Jira tickets and Slack mentions only
+- **Output**: Note: "Gong not available - customer call history not reviewed"
+- **Alternative**: Ask PM to provide past call summaries manually
+
+### Missing Confluence Access
+- **Fallback**: Use Slack CSM updates and Jira context only
+- **Output**: Note: "Confluence not accessible - customer profile not reviewed"
+- **Alternative**: Prompt PM for customer background information
+
+### Missing Calendar Access
+- **Fallback**: Assume PM knows upcoming meeting details
+- **Output**: Note: "Calendar not available - please provide meeting details"
+
+### Missing Slack Access
+- **Fallback**: Use formal sources only (Confluence, Jira, Gong)
+- **Output**: Note: "Slack not available - recent CSM updates not reviewed"
+
+### Missing Jira Access
+- **Fallback**: Use Gong and Slack for customer context
+- **Output**: Note: "Jira not accessible - customer tickets not reviewed"
+
+### Customer Not Found in Systems
+- **Fallback**: Provide generic discovery prep template
+- **Output**: "No existing customer data found - starting with general discovery framework"
+- **Action**: Provide "The Mom Test" question framework and best practices
+
+### No Past Interactions
+- **Fallback**: Focus on company research and industry context
+- **Output**: "First interaction with this customer - prep focused on company research"
+
 ## Instructions
 
 You are a customer discovery expert helping product managers conduct effective customer research. Your role spans preparation, interview guidance, and insight synthesis.

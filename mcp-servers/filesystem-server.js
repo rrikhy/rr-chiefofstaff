@@ -13,6 +13,7 @@
 
 import { spawn } from 'child_process';
 import { resolve } from 'path';
+import './load-env.js';
 
 const rootPath = process.env.FILESYSTEM_ROOT_PATH || process.cwd();
 const resolvedPath = resolve(rootPath);

@@ -1,6 +1,6 @@
 # Chief of Staff Agent System
 
-A master agent system that provides comprehensive weekly insights for Product Directors, powered by Anthropic's Claude AI and Model Context Protocol (MCP). Works with VS Code, GitHub Copilot, and Claude Desktop.
+A master agent system that provides comprehensive weekly insights for Product Directors, powered by Anthropic's Claude AI and Model Context Protocol (MCP). Works with Cursor IDE and Claude Desktop.
 
 ## Overview
 
@@ -37,7 +37,7 @@ chief-of-staff-agent/
 
 1. **Anthropic API Key**: Get one from https://console.anthropic.com/
 2. **Node.js**: Version 18 or higher
-3. **MCP Servers**: Configure in VS Code, GitHub Copilot, or Claude Desktop
+3. **MCP Servers**: Configure in Cursor or Claude Desktop
 
 ### Required MCP Servers
 
@@ -76,7 +76,7 @@ You'll need MCP servers configured for:
    ANTHROPIC_API_KEY=your_api_key_here
    CLAUDE_MODEL=claude-sonnet-4-5-20250929
    
-   # MCP config is auto-detected from VS Code or Claude Desktop
+   # MCP config is auto-detected from Cursor or Claude Desktop
    # Only set this if using a custom location:
    # MCP_CONFIG_PATH=/path/to/your/mcp-config.json
    
@@ -227,7 +227,7 @@ Example agent structure:
 ## MCP Integration
 
 The system automatically:
-1. Loads your MCP configuration (from VS Code, workspace, or Claude Desktop)
+1. Loads your MCP configuration (from Cursor, workspace, or Claude Desktop)
 2. Connects to all configured MCP servers
 3. Makes all MCP tools available to agents
 4. Handles tool calls transparently
@@ -265,10 +265,10 @@ To run this weekly automatically, set up a cron job or scheduled task:
 ### "Could not load MCP config"
 - The system auto-detects MCP config from:
   1. `MCP_CONFIG_PATH` environment variable (if set)
-  2. VS Code User settings (`settings.json` with `mcp.servers`)
-  3. Workspace `.vscode/mcp.json` file
+  2. Cursor User settings (`settings.json` with `mcp.servers`)
+  3. Workspace `.cursor/mcp.json` file
   4. Claude Desktop config (legacy)
-- Create `.vscode/mcp.json` from the example: `cp .vscode/mcp.json.example .vscode/mcp.json`
+- Create `.cursor/mcp.json` from the example: `cp .cursor/mcp.json.example .cursor/mcp.json`
 
 ### "Tool X not found"
 - Ensure the required MCP server is configured in your MCP config
@@ -347,6 +347,5 @@ Architecture inspired by [rachel wolan's agent-chief-of-staff](https://github.co
 
 Powered by:
 - [Anthropic Claude](https://www.anthropic.com/)
-- [GitHub Copilot](https://github.com/features/copilot)
+- [Cursor IDE](https://cursor.sh/)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
-- [VS Code](https://code.visualstudio.com/)

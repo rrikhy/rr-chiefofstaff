@@ -2,8 +2,7 @@
 
 /**
  * Atlassian MCP Server Wrapper
- * Wrapper for @modelcontextprotocol/server-atlassian
- * Provides access to Jira and Confluence via Okta SSO
+ * Uses mcp-atlassian package for Jira and Confluence access
  * 
  * Requires environment variables:
  * - ATLASSIAN_HOST: Your Atlassian domain (e.g., your-company.atlassian.net)
@@ -12,20 +11,32 @@
  */
 
 import { spawn } from 'child_process';
+import './load-env.js';
 
 const requiredEnvVars = ['ATLASSIAN_HOST', 'ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN'];
 const missing = requiredEnvVars.filter(v => !process.env[v]);
 
 if (missing.length > 0) {
   console.error(`Missing required environment variables: ${missing.join(', ')}`);
-  console.error('Please set these in your .vscode/mcp.json or .env file');
+  console.error('Please set these in your .cursor/mcp.json or .env file');
   process.exit(1);
 }
 
-// Spawn the official MCP server
-const child = spawn('npx', ['-y', '@modelcontextprotocol/server-atlassian'], {
+// Map env vars to what mcp-atlassian expects
+const atlassianEnv = {
+  ...process.env,
+  CONFLUENCE_URL: `https://${process.env.ATLASSIAN_HOST.replace(/\/$/, '')}/wiki`,
+  CONFLUENCE_USERNAME: process.env.ATLASSIAN_EMAIL,
+  CONFLUENCE_API_TOKEN: process.env.ATLASSIAN_API_TOKEN,
+  JIRA_URL: `https://${process.env.ATLASSIAN_HOST.replace(/\/$/, '')}`,
+  JIRA_USERNAME: process.env.ATLASSIAN_EMAIL,
+  JIRA_API_TOKEN: process.env.ATLASSIAN_API_TOKEN
+};
+
+// Spawn the mcp-atlassian server
+const child = spawn('npx', ['-y', 'mcp-atlassian'], {
   stdio: 'inherit',
-  env: process.env
+  env: atlassianEnv
 });
 
 child.on('error', (err) => {

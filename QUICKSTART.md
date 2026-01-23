@@ -6,7 +6,7 @@ Get up and running in 5 minutes!
 
 - [ ] Node.js 18+ installed
 - [ ] Anthropic API key
-- [ ] VS Code with GitHub Copilot (for MCP servers)
+- [ ] Cursor IDE (for MCP servers)
 
 ## Quick Setup
 
@@ -25,13 +25,13 @@ cp .env.example .env
 
 # 3. Generate MCP config from your .env
 npm run setup-mcp
-# This creates .vscode/mcp.json with your credentials
+# This creates .cursor/mcp.json with your credentials
 
 # 4. Create and configure config.json
 cp config.example.json config.json
 # Edit config.json with your team details
 
-# 5. Restart VS Code (or Cmd+Shift+P → "Reload Window")
+# 5. Restart Cursor (or Cmd+Shift+P → "Reload Window")
 
 # 6. Test MCP connections
 npm run test-mcp

@@ -36,8 +36,8 @@ chief-of-staff-agent/
 ├── mcp-servers/                      # Custom MCP servers
 │   └── gong-server.js               # Gong API integration
 │
-├── .vscode/                          # VS Code configuration
-│   └── mcp.json                     # MCP server configuration (GitHub Copilot)
+├── .cursor/                          # Cursor configuration
+│   └── mcp.json                     # MCP server configuration
 │
 ├── reports/                          # Generated reports (auto-created)
 │   └── weekly-report-YYYY-MM-DD-HH-MM-SS.md
@@ -68,7 +68,7 @@ chief-of-staff-agent/
 |------|---------|----------|
 | `.env` | API keys and environment settings | Yes |
 | `config.json` | Team info, Slack channels, Jira boards, etc. | Yes |
-| `.vscode/mcp.json` | MCP server configuration for VS Code | Yes |
+| `.cursor/mcp.json` | MCP server configuration for Cursor | Yes |
 
 ### Agent Files (Customize These)
 
@@ -211,7 +211,7 @@ These are already in `.gitignore`.
 → Edit `src/report-generator.js`
 
 ### To Add New MCP Tools
-→ Configure in `.vscode/mcp.json` or VS Code settings (no code changes needed)
+→ Configure in `.cursor/mcp.json` or Cursor settings (no code changes needed)
 
 ## Common Tasks
 
@@ -254,7 +254,7 @@ npm run list
 
 ### External Dependencies
 - Node.js 18+
-- VS Code with GitHub Copilot (or Claude Desktop)
+- Cursor IDE (or Claude Desktop)
 - Anthropic API key
 
 ## Version Control

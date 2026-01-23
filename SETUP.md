@@ -48,7 +48,7 @@ npm install
    ANTHROPIC_API_KEY=sk-ant-your-key-here
    CLAUDE_MODEL=claude-sonnet-4-5-20250929
    
-   # MCP config is auto-detected from VS Code or Claude Desktop
+   # MCP config is auto-detected from Cursor or Claude Desktop
    # Only set this if using a custom config location:
    # MCP_CONFIG_PATH=/path/to/your/mcp-config.json
    
@@ -108,10 +108,10 @@ You can configure MCP servers in one of these locations (checked in order):
 
 1. Copy the example MCP config:
    ```bash
-   cp .vscode/mcp.json.example .vscode/mcp.json
+   cp .cursor/mcp.json.example .cursor/mcp.json
    ```
 
-2. Edit `.vscode/mcp.json` with your credentials for:
+2. Edit `.cursor/mcp.json` with your credentials for:
    - Slack
    - Google Calendar
    - Hubspot
@@ -120,9 +120,9 @@ You can configure MCP servers in one of these locations (checked in order):
    - Mixpanel (optional)
    - Gong (optional)
 
-### Option B: VS Code User Settings
+### Option B: Cursor User Settings
 
-Add MCP servers to your VS Code `settings.json`:
+Add MCP servers to your Cursor `settings.json`:
 ```json
 {
   "mcp.servers": {
@@ -217,16 +217,16 @@ npm start
 
 - The system auto-detects MCP config from multiple locations:
   1. `MCP_CONFIG_PATH` environment variable (if set)
-  2. VS Code User settings (`settings.json` with `mcp.servers`)
-  3. Workspace `.vscode/mcp.json` file
+  2. Cursor User settings (`settings.json` with `mcp.servers`)
+  3. Workspace `.cursor/mcp.json` file
   4. Claude Desktop config (legacy fallback)
-- Create workspace config: `cp .vscode/mcp.json.example .vscode/mcp.json`
+- Create workspace config: `cp .cursor/mcp.json.example .cursor/mcp.json`
 
 ### MCP Tools Not Available
 
-- Verify MCP servers are configured in `.vscode/mcp.json` or VS Code settings
+- Verify MCP servers are configured in `.cursor/mcp.json` or Cursor settings
 - Check that MCP server credentials are valid
-- Restart VS Code if you just added MCP config
+- Restart Cursor if you just added MCP config
 
 ### Agent Execution Fails
 

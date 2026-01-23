@@ -8,6 +8,123 @@ Monitor and report on OKR progress for Officevibe teams and Workleap AI initiati
 - OV OKR Board: Use `config.jira.ovOkrBoardUrl` from config.json
 - Workleap AI Board: Use `config.jira.aiOkrBoardUrl` from config.json
 
+## MCP Tools
+
+This agent uses the following MCP tools to gather data:
+
+### Jira/Atlassian Tools
+- **`jira_get_board_issues(boardId)`**: Get all issues/ideas from a specific board
+  - `boardId`: Jira board identifier (from config.json)
+  - Returns: List of issues with full details (status, priority, assignee, dates)
+  - Used for Ideas boards (OKR boards)
+
+- **`jira_search_issues(jql, maxResults)`**: Search for specific issues using JQL
+  - `jql`: Jira Query Language string
+  - `maxResults`: Maximum number of results to return (default: 50)
+
+**Example JQL Queries for OKR Boards**:
+```jql
+// Ideas updated in last 5 days
+board = 123 AND updated >= "2024-01-01" AND updated <= "2024-01-05"
+
+// Ideas by status
+board = 123 AND status IN ("In Progress", "Planned", "Done")
+
+// Ideas by priority
+board = 123 AND priority IN ("High", "Highest") AND status != "Done"
+
+// New ideas added recently
+board = 123 AND created >= "2024-01-01"
+
+// Status changes detection
+board = 123 AND status CHANGED AFTER "2024-01-01"
+```
+
+- **`jira_get_issue(issueKey)`**: Get detailed information for a specific issue
+  - `issueKey`: Issue identifier (e.g., "WPD-1234")
+  - Returns: Full issue details including history and comments
+
+## Date Format Requirements
+
+**CRITICAL**: All MCP tools require ISO 8601 date format.
+
+- **Dates**: Use `YYYY-MM-DD` format (e.g., "2024-01-15")
+- **Datetimes**: Use `YYYY-MM-DDTHH:mm:ssZ` format (e.g., "2024-01-15T00:00:00Z")
+- **DO NOT use relative dates**: Avoid "-5d", "last week", "yesterday"
+- **Context-provided dates**: The agent runner provides `startDate` and `endDate` in the correct format - use these directly
+
+Example usage:
+```javascript
+// Correct - Get board issues and filter by update date
+jira_get_board_issues("123")
+// Then filter issues where updated >= startDate
+
+// Correct - JQL with ISO dates
+jira_search_issues('board = 123 AND updated >= "2024-01-01" AND updated <= "2024-01-05"', 100)
+
+// Incorrect
+jira_search_issues('board = 123 AND updated >= "-5d"', 100)
+```
+
+## Required Configuration
+
+This agent requires the following keys in `config.json`:
+
+### Jira Configuration
+- **`jira.ovOkrBoardId`**: Board ID for Officevibe OKR Ideas Board
+  - Example: `"123"`
+  - Used to access OV OKR board via `jira_get_board_issues()`
+
+- **`jira.ovOkrBoardUrl`**: Full URL to OV OKR board (for reference)
+  - Example: `"https://workleap.atlassian.net/jira/software/c/projects/WPD/boards/123"`
+  - Used in output for direct links
+
+- **`jira.aiOkrBoardId`**: Board ID for Workleap AI Ideas Board
+  - Example: `"456"`
+  - Used to access AI initiatives board
+
+- **`jira.aiOkrBoardUrl`**: Full URL to AI board (for reference)
+  - Example: `"https://workleap.atlassian.net/jira/software/c/projects/WLAI/boards/456"`
+  - Used in output for direct links
+
+### Optional Configuration
+- **`jira.okrLookbackDays`**: Number of days to look back for changes (default: 5)
+  - Example: `5`
+  - Used to filter recent updates
+
+## Error Handling
+
+This agent should gracefully handle missing data sources:
+
+### Missing OV OKR Board Access
+- **Fallback**: Skip Officevibe OKR section
+- **Output**: Add note: "OV OKR Board not accessible (Board ID: {boardId})"
+- **Check**: Verify `jira.ovOkrBoardId` is configured and accessible
+
+### Missing AI Board Access
+- **Fallback**: Skip Workleap AI section
+- **Output**: Add note: "AI Board not accessible (Board ID: {boardId})"
+- **Check**: Verify `jira.aiOkrBoardId` is configured and accessible
+
+### No Updates in Period
+- **Output**: Add note: "No significant updates to OKRs in the reporting period"
+- **Check**: Verify date range is reasonable (not too narrow)
+
+### Invalid Board ID Configuration
+- **Fallback**: Provide configuration guidance
+- **Output**: Add note: "Invalid board ID configuration. Please verify config.json has valid jira.ovOkrBoardId and jira.aiOkrBoardId"
+- **Action**: List available boards if possible
+
+### Incomplete Issue Data
+- **Fallback**: Report on available fields only
+- **Output**: Note which fields are missing (owner, status, dates, etc.)
+- **Action**: Include issue ID and title at minimum
+
+### Cross-Initiative Analysis Not Possible
+- **Fallback**: Report on each board independently
+- **Output**: Add note: "Cross-initiative analysis limited due to missing dependency data"
+- **Condition**: Only one board accessible or no shared fields
+
 ## Instructions
 You are the OKR Updates and Progress Agent. Your job is to track progress on strategic initiatives and objectives for both Officevibe and Workleap AI.
 

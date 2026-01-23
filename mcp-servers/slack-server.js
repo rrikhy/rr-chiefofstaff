@@ -19,13 +19,14 @@
  */
 
 import { spawn } from 'child_process';
+import './load-env.js';
 
 const requiredEnvVars = ['SLACK_BOT_TOKEN', 'SLACK_TEAM_ID'];
 const missing = requiredEnvVars.filter(v => !process.env[v]);
 
 if (missing.length > 0) {
   console.error(`Missing required environment variables: ${missing.join(', ')}`);
-  console.error('Please set these in your .vscode/mcp.json or .env file');
+  console.error('Please set these in your .cursor/mcp.json or .env file');
   process.exit(1);
 }
 

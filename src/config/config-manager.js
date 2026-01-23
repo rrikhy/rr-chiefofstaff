@@ -57,13 +57,29 @@ export class ConfigManager {
 
 /**
  * Validate environment variables
+ * Supports: Direct Anthropic API or AWS Bedrock
  * @throws {Error} If required environment variables are missing
  */
 export function validateEnvironment() {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
+  const hasAwsBedrock = !!(process.env.AWS_REGION && (process.env.AWS_ACCESS_KEY_ID || process.env.AWS_PROFILE));
+
+  if (!hasAnthropicKey && !hasAwsBedrock) {
     throw new Error(
-      'Error: ANTHROPIC_API_KEY not found in environment!\nPlease create a .env file with your Anthropic API key.'
+      'Error: No Claude API configuration found!\n\n' +
+      'Option 1: Direct Anthropic API\n' +
+      '  Set ANTHROPIC_API_KEY in your .env file\n\n' +
+      'Option 2: AWS Bedrock\n' +
+      '  Set AWS_REGION and either:\n' +
+      '  - AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY, or\n' +
+      '  - AWS_PROFILE (to use ~/.aws/credentials)\n' +
+      '  Also run: npm install @anthropic-ai/bedrock-sdk'
     );
   }
-  console.log('Environment validated');
+
+  if (hasAwsBedrock) {
+    console.log('Environment validated (AWS Bedrock)');
+  } else {
+    console.log('Environment validated');
+  }
 }

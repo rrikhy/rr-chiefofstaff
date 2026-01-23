@@ -22,7 +22,7 @@ const missing = requiredEnvVars.filter(v => !process.env[v]);
 
 if (missing.length > 0) {
   console.error(`Missing required environment variables: ${missing.join(', ')}`);
-  console.error('Please set these in your .vscode/mcp.json or .env file');
+  console.error('Please set these in your .cursor/mcp.json or .env file');
   process.exit(1);
 }
 

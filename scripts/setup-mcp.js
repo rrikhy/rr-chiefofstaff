@@ -3,7 +3,7 @@
 /**
  * MCP Configuration Setup Script
  * 
- * Generates .vscode/mcp.json from .env file credentials
+ * Generates .cursor/mcp.json from .env file credentials
  * Run: npm run setup-mcp
  */
 
@@ -52,36 +52,29 @@ function generateMcpConfig(env) {
     servers: {}
   };
 
-  // Atlassian (Jira + Confluence)
-  if (env.ATLASSIAN_HOST && env.ATLASSIAN_EMAIL && env.ATLASSIAN_API_TOKEN) {
-    config.servers.atlassian = {
-      command: 'node',
-      args: ['mcp-servers/atlassian-server.js'],
-      env: {
-        ATLASSIAN_HOST: env.ATLASSIAN_HOST,
-        ATLASSIAN_EMAIL: env.ATLASSIAN_EMAIL,
-        ATLASSIAN_API_TOKEN: env.ATLASSIAN_API_TOKEN
-      }
-    };
-    console.log('✅ Atlassian (Jira/Confluence) configured');
-  } else {
-    console.log('⏭️  Atlassian skipped (missing ATLASSIAN_HOST, ATLASSIAN_EMAIL, or ATLASSIAN_API_TOKEN)');
-  }
+  // Atlassian Rovo - uses mcp-remote bridge to handle OAuth
+  // The mcp-remote tool opens a browser for authentication and proxies the connection
+  config.servers['atlassian'] = {
+    command: 'npx',
+    args: ['-y', 'mcp-remote', 'https://mcp.atlassian.com/v1/sse']
+  };
+  console.log('✅ Atlassian Rovo (via mcp-remote bridge) configured');
 
-  // Slack
-  if (env.SLACK_BOT_TOKEN && env.SLACK_TEAM_ID) {
-    config.servers.slack = {
-      command: 'node',
-      args: ['mcp-servers/slack-server.js'],
-      env: {
-        SLACK_BOT_TOKEN: env.SLACK_BOT_TOKEN,
-        SLACK_TEAM_ID: env.SLACK_TEAM_ID
-      }
-    };
-    console.log('✅ Slack configured');
-  } else {
-    console.log('⏭️  Slack skipped (missing SLACK_BOT_TOKEN or SLACK_TEAM_ID)');
-  }
+  // Slack - temporarily disabled
+  // if (env.SLACK_BOT_TOKEN && env.SLACK_TEAM_ID) {
+  //   config.servers.slack = {
+  //     command: 'node',
+  //     args: ['mcp-servers/slack-server.js'],
+  //     env: {
+  //       SLACK_BOT_TOKEN: env.SLACK_BOT_TOKEN,
+  //       SLACK_TEAM_ID: env.SLACK_TEAM_ID
+  //     }
+  //   };
+  //   console.log('✅ Slack configured');
+  // } else {
+  //   console.log('⏭️  Slack skipped (missing SLACK_BOT_TOKEN or SLACK_TEAM_ID)');
+  // }
+  console.log('⏭️  Slack disabled (temporarily)');
 
   // Google Calendar
   if (env.GOOGLE_CALENDAR_CREDENTIALS_PATH) {
@@ -115,21 +108,25 @@ function generateMcpConfig(env) {
   }
 
   // Gong
-  if (env.GONG_API_KEY && env.GONG_API_SECRET) {
+  const gongKey = env.GONG_ACCESS_KEY || env.GONG_API_KEY;
+  const gongSecret = env.GONG_ACCESS_KEY_SECRET || env.GONG_API_SECRET;
+  if (gongKey && gongSecret) {
     config.servers.gong = {
       command: 'node',
       args: ['mcp-servers/gong-server.js'],
       env: {
-        GONG_API_KEY: env.GONG_API_KEY,
-        GONG_API_SECRET: env.GONG_API_SECRET
+        // Prefer the newer ACCESS_KEY naming, but support API_KEY aliases.
+        GONG_ACCESS_KEY: gongKey,
+        GONG_ACCESS_KEY_SECRET: gongSecret,
+        ...(env.GONG_BASE_URL ? { GONG_BASE_URL: env.GONG_BASE_URL } : {})
       }
     };
     console.log('✅ Gong configured');
   } else {
-    console.log('⏭️  Gong skipped (missing GONG_API_KEY or GONG_API_SECRET)');
+    console.log('⏭️  Gong skipped (missing GONG_ACCESS_KEY/GONG_API_KEY or GONG_ACCESS_KEY_SECRET/GONG_API_SECRET)');
   }
 
-  // Filesystem (always enabled)
+  // Filesystem - project directory (always enabled)
   config.servers.filesystem = {
     command: 'node',
     args: ['mcp-servers/filesystem-server.js'],
@@ -137,7 +134,29 @@ function generateMcpConfig(env) {
       FILESYSTEM_ROOT_PATH: env.FILESYSTEM_ROOT_PATH || ROOT_DIR
     }
   };
-  console.log('✅ Filesystem configured');
+  console.log('✅ Filesystem (project) configured');
+
+  // OneDrive / SharePoint - auto-detect CloudStorage folders
+  const cloudStoragePath = path.join(process.env.HOME, 'Library/CloudStorage');
+  if (fs.existsSync(cloudStoragePath)) {
+    const cloudFolders = fs.readdirSync(cloudStoragePath)
+      .filter(f => !f.startsWith('.') && fs.statSync(path.join(cloudStoragePath, f)).isDirectory());
+    
+    if (cloudFolders.length > 0) {
+      // Add each cloud folder as a separate server for clarity
+      cloudFolders.forEach((folder, index) => {
+        const serverName = index === 0 ? 'onedrive' : `cloud-storage-${index + 1}`;
+        config.servers[serverName] = {
+          command: 'node',
+          args: ['mcp-servers/filesystem-server.js'],
+          env: {
+            FILESYSTEM_ROOT_PATH: path.join(cloudStoragePath, folder)
+          }
+        };
+        console.log(`✅ ${folder} (OneDrive/SharePoint) configured`);
+      });
+    }
+  }
 
   return config;
 }
@@ -150,21 +169,21 @@ function main() {
   const env = loadEnv();
   const config = generateMcpConfig(env);
 
-  // Ensure .vscode directory exists
-  const vscodeDir = path.join(ROOT_DIR, '.vscode');
-  if (!fs.existsSync(vscodeDir)) {
-    fs.mkdirSync(vscodeDir, { recursive: true });
+  // Ensure .cursor directory exists
+  const cursorDir = path.join(ROOT_DIR, '.cursor');
+  if (!fs.existsSync(cursorDir)) {
+    fs.mkdirSync(cursorDir, { recursive: true });
   }
 
   // Write config
-  const configPath = path.join(vscodeDir, 'mcp.json');
+  const configPath = path.join(cursorDir, 'mcp.json');
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
 
   const serverCount = Object.keys(config.servers).length;
-  console.log(`\n✨ Generated .vscode/mcp.json with ${serverCount} server(s)`);
+  console.log(`\n✨ Generated .cursor/mcp.json with ${serverCount} server(s)`);
   console.log('\nNext steps:');
-  console.log('1. Restart VS Code or reload the window');
-  console.log('2. GitHub Copilot will automatically detect the MCP servers');
+  console.log('1. Restart Cursor or reload the window');
+  console.log('2. Cursor will automatically detect the MCP servers');
   console.log('3. Run "npm run test-mcp" to verify connections\n');
 }
 

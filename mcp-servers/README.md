@@ -7,6 +7,7 @@ This directory contains all MCP (Model Context Protocol) server configurations f
 | Server | File | Purpose | Auth Type |
 |--------|------|---------|-----------|
 | **Atlassian** | `atlassian-server.js` | Jira & Confluence access | API Token |
+| **Salesforce** | `salesforce-server.js` | Salesforce CRM & Platform | SF CLI Auth |
 | **Slack** | `slack-server.js` | Slack channels & messages | Bot Token |
 | **Microsoft Graph** | `microsoft-graph-server.js` | Office 365, OneDrive, Calendar | OAuth 2.0 |
 | **Google Calendar** | `google-calendar-server.js` | Google Calendar access | OAuth 2.0 |
@@ -15,9 +16,33 @@ This directory contains all MCP (Model Context Protocol) server configurations f
 
 ## Configuration
 
-All servers are configured via `.vscode/mcp.json` in the workspace root. Each server requires specific environment variables.
+All servers are configured via `.cursor/mcp.json` in the workspace root. Each server requires specific environment variables.
 
 ### Atlassian (Jira + Confluence)
+
+There are two ways to connect to Atlassian:
+
+#### Option A: Atlassian Rovo via mcp-remote bridge (OAuth)
+
+This uses the official Atlassian MCP server with OAuth authentication via the `mcp-remote` bridge:
+
+```json
+{
+  "atlassian-rovo": {
+    "command": "npx",
+    "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"]
+  }
+}
+```
+
+**How it works:**
+1. The `mcp-remote` tool opens a browser window for Atlassian OAuth login
+2. After authentication, it proxies the connection to Cursor
+3. Keep the terminal running to maintain the connection
+
+#### Option B: mcp-atlassian via API Token (Recommended for automation)
+
+This uses the community `mcp-atlassian` package with API token authentication:
 
 ```bash
 ATLASSIAN_HOST=your-company.atlassian.net
@@ -26,6 +51,88 @@ ATLASSIAN_API_TOKEN=your-api-token
 ```
 
 Get your API token from: https://id.atlassian.com/manage-profile/security/api-tokens
+
+```json
+{
+  "mcp-atlassian": {
+    "command": "uvx",
+    "args": ["mcp-atlassian"],
+    "env": {
+      "JIRA_URL": "https://your-company.atlassian.net",
+      "JIRA_USERNAME": "your-email@company.com",
+      "JIRA_API_TOKEN": "your-api-token",
+      "CONFLUENCE_URL": "https://your-company.atlassian.net/wiki",
+      "CONFLUENCE_USERNAME": "your-email@company.com",
+      "CONFLUENCE_API_TOKEN": "your-api-token"
+    }
+  }
+}
+```
+
+### Salesforce
+
+Uses the official [Salesforce CLI MCP server](https://github.com/salesforcecli/mcp).
+
+**Prerequisites:**
+
+1. Install Salesforce CLI:
+```bash
+npm install -g @salesforce/cli
+```
+
+2. Authenticate to your Salesforce org:
+```bash
+# For production/developer orgs
+sf org login web -a myorg
+
+# For sandboxes
+sf org login web -a myorg -r https://test.salesforce.com
+```
+
+**Environment Variables:**
+
+```bash
+# Required: Alias or username of your authenticated org
+SALESFORCE_TARGET_ORG=myorg
+
+# Optional: Comma-separated toolsets to enable
+# Options: core, metadata, apex, lwc, mobile-core, mobile-offline, 
+#          lwc-experts, aura-experts, code-analysis, scale-products
+SALESFORCE_TOOLSETS=core,metadata,apex
+
+# Optional: Override instance URL
+SALESFORCE_INSTANCE_URL=https://mycompany.my.salesforce.com
+```
+
+**Cursor MCP Configuration:**
+
+```json
+{
+  "salesforce": {
+    "command": "node",
+    "args": ["mcp-servers/salesforce-server.js"],
+    "env": {
+      "SALESFORCE_TARGET_ORG": "myorg",
+      "SALESFORCE_TOOLSETS": "core,metadata,apex"
+    }
+  }
+}
+```
+
+**Available Toolsets:**
+
+| Toolset | Description |
+|---------|-------------|
+| `core` | Basic org tools: query, search, deploy, retrieve, etc. |
+| `metadata` | Metadata API operations |
+| `apex` | Apex code execution and debugging |
+| `lwc` | Lightning Web Components development |
+| `mobile-core` | Mobile development (barcode, biometrics, location) |
+| `mobile-offline` | Mobile offline support |
+| `lwc-experts` | LWC best practices and guidance |
+| `aura-experts` | Aura to LWC migration assistance |
+| `code-analysis` | Static code analysis with Code Analyzer |
+| `scale-products` | Performance antipattern detection |
 
 ### Slack
 
@@ -88,7 +195,7 @@ Defaults to the current working directory if not set.
 To add a new MCP server:
 
 1. Create a new wrapper script in this directory (e.g., `myservice-server.js`)
-2. Add the server configuration to `.vscode/mcp.json`
+2. Add the server configuration to `.cursor/mcp.json`
 3. Document the required environment variables in this README
 
 ### Wrapper Script Template
